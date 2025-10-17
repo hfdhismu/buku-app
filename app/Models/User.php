@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -62,6 +63,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Buku::class, 'buku_user')
                 ->withPivot('tanggal_pinjam', 'tanggal_kembali')
                 ->withTimestamps();
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
 
 }
