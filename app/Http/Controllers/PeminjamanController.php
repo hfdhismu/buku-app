@@ -15,7 +15,7 @@ class PeminjamanController extends Controller
         $buku = Buku::all();
         $users = User::all();
 
-        return view('peminjaman.index', compact('peminjaman', 'buku', 'users'));
+        return view('admin.peminjaman.index', compact('peminjaman', 'buku', 'users'));
     }
 
     public function store(Request $request)

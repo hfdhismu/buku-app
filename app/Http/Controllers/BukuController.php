@@ -13,7 +13,7 @@ class BukuController extends Controller
     {
         $buku = Buku::with('user')->get();
         $users = User::all();
-        return view('buku.index', compact('buku', 'users'));
+        return view('admin.buku.index', compact('buku', 'users'));
     }
 
     // Menyimpan data buku baru
@@ -56,4 +56,5 @@ class BukuController extends Controller
         $buku->delete();
         return redirect()->route('buku.index')->with('success', 'Buku berhasil dihapus!');
     }
+    
 }

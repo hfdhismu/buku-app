@@ -4,44 +4,67 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BukuController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\ProfilController;
-use App\Http\Controllers\ProfileController; // bawaan Breeze
 use App\Models\Buku;
 use App\Models\Profil;
 use App\Models\Peminjaman;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\User\DashboardController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-// 🏠 Halaman awal → langsung ke dashboard
+// 🏠 Halaman awal
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-// 🔐 Semua route di bawah ini hanya bisa diakses jika sudah login
+// 🔐 Semua route login + verified
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // 📊 Dashboard
-    Route::get('/dashboard', function () {
-        $totalBuku = Buku::count();
-        $totalProfil = Profil::count();
-        $totalPeminjaman = Peminjaman::count();
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN ROUTES
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['CheckRole:admin'])->group(function () {
+        Route::get('/dashboard', function () {
+            $totalBuku = Buku::count();
+            $totalProfil = Profil::count();
+            $totalPeminjaman = Peminjaman::count();
+            return view('admin.dashboard', compact('totalBuku', 'totalProfil', 'totalPeminjaman'));
+        })->name('dashboard');
 
-        return view('dashboard', compact('totalBuku', 'totalProfil', 'totalPeminjaman'));
-    })->name('dashboard');
+        // ✅ Admin CRUD
+        Route::resource('buku', BukuController::class);
+        Route::resource('profil', ProfilController::class);
+        Route::resource('peminjaman', PeminjamanController::class);
+    });
 
-    // ✅ CRUD utama kamu
-    Route::resource('buku', BukuController::class);
-    Route::resource('peminjaman', PeminjamanController::class);
-    Route::resource('profil', ProfilController::class);
+    /*
+    |--------------------------------------------------------------------------
+    | USER ROUTES
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['CheckRole:user'])->group(function () {
+        Route::get('/dashboard/user', [DashboardController::class, 'index'])
+            ->middleware('CheckRole:user')
+            ->name('dashboard.user');
 
-    // 👤 Rute profil (user) bawaan Breeze
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        // ✅ Profil user
+        Route::get('/profil-saya', [ProfilController::class, 'edit'])->name('profil.saya');
+        Route::patch('/profil-saya', [ProfilController::class, 'update'])->name('profil.saya.update');
+
+        // ✅ Peminjaman user
+        Route::get('/peminjaman-saya', function () {
+            $user = Auth::user();
+            $peminjaman = $user?->profil?->peminjaman()->get() ?? collect();
+            return view('user.peminjaman.index', compact('peminjaman'));
+        })->name('peminjaman.saya');
+    });
 });
 
-// 🔄 Rute autentikasi Breeze (login/register)
+Route::get('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect('/login');
+})->name('logout.get');
+
 require __DIR__.'/auth.php';

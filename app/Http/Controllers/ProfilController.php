@@ -13,7 +13,7 @@ class ProfilController extends Controller
     {
         $profil = Profil::with('user')->get();
         $users = User::all();
-        return view('profil.index', compact('profil', 'users'));
+        return view('admin.profil.index', compact('profil', 'users'));
     }
 
     // Menyimpan data profil baru
@@ -38,7 +38,7 @@ class ProfilController extends Controller
             'telepon' => 'required|string|max:20',
         ]);
 
-        $profil->update($request->all());
+        $profil->update($request->only('alamat','telepon'));
 
         return redirect()->route('profil.index')->with('success', 'Profil berhasil diperbarui!');
     }
