@@ -23,6 +23,7 @@
                 <th>Judul Buku</th>
                 <th>Tanggal Pinjam</th>
                 <th>Tanggal Kembali</th>
+                <th>Status</th>
                 <th>Aksi</th>
             </tr>
         </thead>
@@ -35,16 +36,13 @@
                     <td>{{ $item->tanggal_pinjam }}</td>
                     <td>{{ $item->tanggal_kembali ?? '-' }}</td>
                     <td>
-                        {{-- <button 
-                            class="btn btn-sm btn-outline-primary me-1 btnEdit"
-                            data-id="{{ $item->id }}"
-                            data-userid="{{ $item->user_id }}"
-                            data-bukuid="{{ $item->buku_id }}"
-                            data-tanggal_pinjam="{{ $item->tanggal_pinjam }}"
-                            data-tanggal_kembali="{{ $item->tanggal_kembali }}">
-                            Edit
-                        </button> --}}
-
+                        @if (is_null($item->tanggal_kembali))
+                            <span class="badge bg-warning text-dark">Dipinjam</span>
+                        @else
+                            <span class="badge bg-success">Dikembalikan</span>
+                        @endif
+                    </td>
+                    <td>
                         <form action="{{ route('peminjaman.destroy', $item->id) }}" method="POST" class="d-inline">
                             @csrf
                             @method('DELETE')
@@ -56,13 +54,13 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-center text-muted">Belum ada data peminjaman</td></tr>
+                <tr><td colspan="7" class="text-center text-muted">Belum ada data peminjaman</td></tr>
             @endforelse
         </tbody>
     </table>
 </div>
 
-<!-- Modal Tambah/Edit Peminjaman -->
+<!-- Modal Tambah Peminjaman -->
 <div class="modal fade" id="peminjamanModal" tabindex="-1" aria-labelledby="peminjamanModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -73,7 +71,6 @@
         <div class="modal-body">
             <form id="peminjamanForm" method="POST" action="{{ route('peminjaman.store') }}">
                 @csrf
-                <input type="hidden" name="_method" id="formMethod" value="POST">
 
                 <div class="mb-3">
                     <label class="form-label">Pilih User</label>
@@ -100,14 +97,9 @@
                     <input type="date" name="tanggal_pinjam" id="tanggal_pinjam" class="form-control" required>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Tanggal Kembali</label>
-                    <input type="date" name="tanggal_kembali" id="tanggal_kembali" class="form-control" required>
-                </div>
-
                 <div class="text-end">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btnSubmit">Simpan</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
             </form>
         </div>
@@ -115,64 +107,15 @@
   </div>
 </div>
 
-<!-- Script Modal Dinamis -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const modal = new bootstrap.Modal(document.getElementById('peminjamanModal'));
     const form = document.getElementById('peminjamanForm');
-    const formMethod = document.getElementById('formMethod');
-    const formTitle = document.getElementById('peminjamanModalLabel');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const tanggalPinjam = document.getElementById('tanggal_pinjam');
-    const tanggalKembali = document.getElementById('tanggal_kembali');
 
-    // Tombol Tambah
     document.getElementById('btnTambah').addEventListener('click', function() {
         form.reset();
-        form.action = "{{ route('peminjaman.store') }}";
-        formMethod.value = "POST";
-        formTitle.textContent = "Tambah Peminjaman";
-        btnSubmit.textContent = "Simpan";
         modal.show();
     });
-
-    // Tombol Edit 🧩
-    document.querySelectorAll('.btnEdit').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            const userId = this.dataset.userid;
-            const bukuId = this.dataset.bukuid;
-            const tglPinjam = this.dataset.tanggal_pinjam;
-            const tglKembali = this.dataset.tanggal_kembali;
-
-            // isi form modal
-            document.getElementById('user_id').value = userId;
-            document.getElementById('buku_id').value = bukuId;
-            document.getElementById('tanggal_pinjam').value = tglPinjam;
-            document.getElementById('tanggal_kembali').value = tglKembali;
-
-            // ubah aksi form ke mode edit
-            form.action = "/peminjaman/" + id;
-            formMethod.value = "PUT";
-            formTitle.textContent = "Edit Peminjaman";
-            btnSubmit.textContent = "Perbarui";
-            
-            modal.show();
-        });
-    });
-
-    // 🛡️ Validasi sebelum submit
-    form.addEventListener('submit', function (e) {
-        const pinjam = tanggalPinjam.value;
-        const kembali = tanggalKembali.value;
-
-        if (kembali < pinjam) {
-            e.preventDefault(); // hentikan submit
-            alert('❌ Tanggal kembali tidak boleh sebelum tanggal pinjam!');
-            tanggalKembali.focus();
-        }
-    });
 });
-
 </script>
 @endsection

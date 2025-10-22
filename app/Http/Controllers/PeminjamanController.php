@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 
 class PeminjamanController extends Controller
 {
+    // 📄 Tampilkan semua data peminjaman (untuk admin)
     public function index()
     {
         $peminjaman = Peminjaman::with(['buku', 'user'])->get();
@@ -18,20 +19,27 @@ class PeminjamanController extends Controller
         return view('admin.peminjaman.index', compact('peminjaman', 'buku', 'users'));
     }
 
+    // ➕ Tambah peminjaman baru oleh admin
     public function store(Request $request)
     {
         $request->validate([
-            'buku_id' => 'required',
-            'user_id' => 'required',
+            'buku_id' => 'required|exists:buku,id',
+            'user_id' => 'required|exists:users,id',
             'tanggal_pinjam' => 'required|date',
-            'tanggal_kembali' => 'nullable|date|after_or_equal:tanggal_pinjam',
         ]);
 
-        Peminjaman::create($request->all());
+        // Admin hanya menentukan tanggal pinjam, tanggal kembali dikosongkan
+        Peminjaman::create([
+            'buku_id' => $request->buku_id,
+            'user_id' => $request->user_id,
+            'tanggal_pinjam' => $request->tanggal_pinjam,
+            'tanggal_kembali' => null,
+        ]);
 
         return redirect()->route('peminjaman.index')->with('success', 'Data peminjaman berhasil ditambahkan!');
     }
 
+    // 🗑️ Hapus data peminjaman
     public function destroy(Peminjaman $peminjaman)
     {
         $peminjaman->delete();

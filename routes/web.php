@@ -4,11 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BukuController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\User\UserProfilController;
+use App\Http\Controllers\User\UserPeminjamanController;
 use App\Models\Buku;
 use App\Models\Profil;
 use App\Models\Peminjaman;
+use App\Http\Controllers\AdminUserController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\User\DashboardController;
+use App\Models\User;
 
 // 🏠 Halaman awal
 Route::get('/', function () {
@@ -25,16 +29,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     */
     Route::middleware(['CheckRole:admin'])->group(function () {
         Route::get('/dashboard', function () {
+            $totalUser = User::count();
             $totalBuku = Buku::count();
             $totalProfil = Profil::count();
             $totalPeminjaman = Peminjaman::count();
-            return view('admin.dashboard', compact('totalBuku', 'totalProfil', 'totalPeminjaman'));
+            return view('admin.dashboard', compact('totalUser', 'totalBuku', 'totalProfil', 'totalPeminjaman'));
         })->name('dashboard');
 
         // ✅ Admin CRUD
         Route::resource('buku', BukuController::class);
         Route::resource('profil', ProfilController::class);
         Route::resource('peminjaman', PeminjamanController::class);
+        Route::resource('users', AdminUserController::class)->except(['create', 'edit', 'show']);
+        // - store -> POST /users
+        // - update -> PUT /users/{user}
+        // - destroy -> DELETE /users/{user}
+        // - index -> GET /users
     });
 
     /*
@@ -47,16 +57,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('CheckRole:user')
             ->name('dashboard.user');
 
-        // ✅ Profil user
-        Route::get('/profil-saya', [ProfilController::class, 'edit'])->name('profil.saya');
-        Route::patch('/profil-saya', [ProfilController::class, 'update'])->name('profil.saya.update');
+        // ✅ Profil User
+        Route::get('/dashboard/user/profil', [UserProfilController::class, 'index'])
+        ->name('profil.user');
+        Route::put('/dashboard/user/profil', [UserProfilController::class, 'update'])
+            ->name('profil.user.update');
 
-        // ✅ Peminjaman user
-        Route::get('/peminjaman-saya', function () {
-            $user = Auth::user();
-            $peminjaman = $user?->profil?->peminjaman()->get() ?? collect();
-            return view('user.peminjaman.index', compact('peminjaman'));
-        })->name('peminjaman.saya');
+        // ✅ ROUTE PEMINJAMAN (kalau nanti dipakai)
+        Route::get('/dashboard/user/peminjaman', [UserPeminjamanController::class, 'index'])
+            ->name('peminjaman.user');
+
+        Route::put('/dashboard/user/peminjaman/{id}/kembalikan', [UserPeminjamanController::class, 'kembalikan'])
+            ->name('peminjaman.kembalikan');
     });
 });
 

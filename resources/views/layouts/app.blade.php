@@ -30,9 +30,9 @@
                     @auth
                         @if(auth()->user()->role->name === 'admin')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('buku.*') ? 'active fw-semibold' : '' }}"
-                                    href="{{ route('buku.index') }}">
-                                    Buku
+                                <a class="nav-link {{ request()->routeIs('users.*') ? 'active fw-semibold' : '' }}"
+                                    href="{{ route('users.index') }}">
+                                    User
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -41,6 +41,12 @@
                                     Profil
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('buku.*') ? 'active fw-semibold' : '' }}"
+                                    href="{{ route('buku.index') }}">
+                                    Buku
+                                </a>
+                            </li>                            
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('peminjaman.*') ? 'active fw-semibold' : '' }}"
                                     href="{{ route('peminjaman.index') }}">

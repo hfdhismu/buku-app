@@ -24,7 +24,6 @@
                 <th>Penulis</th>
                 <th>Tahun Terbit</th>
                 <th>Penerbit</th>
-                <th>Pemilik (User)</th>
                 <th>Aksi</th>
             </tr>
         </thead>
@@ -36,7 +35,6 @@
                     <td>{{ $item->penulis }}</td>
                     <td>{{ $item->tahun_terbit }}</td>
                     <td>{{ $item->penerbit }}</td>
-                    <td>{{ $item->user->name ?? '-' }}</td>
                     <td>
                         <button 
                             class="btn btn-sm btn-outline-primary me-1 btnEdit"
@@ -59,7 +57,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center text-muted">Belum ada data buku</td></tr>
+                <tr><td colspan="6" class="text-center text-muted">Belum ada data buku</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -98,17 +96,6 @@
                     <input type="text" name="penerbit" id="penerbit" class="form-control" required>
                 </div>
 
-                {{-- kalau ingin pilih user pemilik --}}
-                <div class="mb-3">
-                    <label class="form-label">Pemilik Buku (User)</label>
-                    <select name="user_id" id="user_id" class="form-select" required>
-                        <option value="">-- Pilih User --</option>
-                        @foreach ($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
                 <div class="text-end">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary" id="btnSubmit">Simpan</button>
@@ -136,7 +123,6 @@ document.addEventListener("DOMContentLoaded", function() {
         formMethod.value = "POST";
         formTitle.textContent = "Tambah Buku";
         btnSubmit.textContent = "Simpan";
-        document.getElementById('user_id').disabled = false;
         modal.show();
     });
 
@@ -148,10 +134,6 @@ document.addEventListener("DOMContentLoaded", function() {
             document.getElementById('penulis').value = this.dataset.penulis;
             document.getElementById('tahun_terbit').value = this.dataset.tahun;
             document.getElementById('penerbit').value = this.dataset.penerbit;
-
-            // Atur ulang select user_id kalau perlu (optional)
-            // document.getElementById('user_id').value = this.dataset.userid;
-            document.getElementById('user_id').disabled = true;
 
             form.action = "/buku/" + id;
             formMethod.value = "PUT";
