@@ -23,31 +23,31 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+{
+    $request->validate([
+        'email' => ['required', 'string', 'email'],
+        'password' => ['required', 'string'],
+    ]);
+
+    if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        return back()->withErrors([
+            'email' => 'Email atau password salah.',
         ]);
-
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            return back()->withErrors([
-                'email' => 'Email atau password salah.',
-            ]);
-        }
-
-        $request->session()->regenerate();
-
-        $user = Auth::user();
-
-        // 🔥 Redirect berdasarkan role
-        if ($user->role->name === 'admin') {
-            return redirect()->route('dashboard');
-        } elseif ($user->role->name === 'user') {
-            return redirect()->route('dashboard.user');
-        }
-
-        return redirect('/'); // fallback
     }
+
+    $request->session()->regenerate();
+
+    $user = Auth::user();
+
+    // 🔥 Redirect berdasarkan role
+    if ($user->role->name === 'admin' || $user->role->name === 'staff') {
+        return redirect()->route('dashboard');
+    } elseif ($user->role->name === 'user') {
+        return redirect()->route('dashboard.user');
+    }
+
+    return redirect('/'); // fallback
+}
 
 
     /**

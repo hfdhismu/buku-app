@@ -9,26 +9,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Jangan buat ulang kolom, karena sudah ada
-            // Cukup tambahkan foreign key jika belum ada
-            try {
-                $table->foreign('role_id')
-                      ->references('id')
-                      ->on('roles')
-                      ->onDelete('cascade');
-            } catch (\Exception $e) {
-                // Abaikan error jika foreign key sudah ada
+            // Tambahkan kolom role_id terlebih dahulu
+            if (!Schema::hasColumn('users', 'role_id')) {
+                $table->unsignedBigInteger('role_id')->nullable()->after('id');
             }
+
+            // Tambahkan foreign key ke tabel roles
+            $table->foreign('role_id')
+                  ->references('id')
+                  ->on('roles')
+                  ->onDelete('cascade');
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            try {
+            // Hapus relasi dan kolom jika rollback
+            if (Schema::hasColumn('users', 'role_id')) {
                 $table->dropForeign(['role_id']);
-            } catch (\Exception $e) {
-                // Abaikan jika foreign key sudah dihapus
+                $table->dropColumn('role_id');
             }
         });
     }

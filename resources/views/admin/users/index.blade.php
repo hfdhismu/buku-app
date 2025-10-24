@@ -31,7 +31,7 @@
                         <td>{{ $key + 1 }}</td>
                         <td>{{ $user->name }}</td>
                         {{-- <td>{{ $user->email }}</td> --}}
-                        <td>{{ $user->role ? ucfirst($user->role->name) : '-' }}</td>
+                        <td>{{ $user->role ? strtolower($user->role->name) : '-' }}</td>
                         <td>
                             <!-- Tombol Edit -->
                             <button class="btn btn-sm btn-outline-primary me-1 btnEdit" data-id="{{ $user->id }}"
@@ -97,7 +97,7 @@
                             <select name="role" id="role" class="form-select" required>
                                 <option value="">Pilih Role</option>
                                 @foreach(\App\Models\Role::all() as $role)
-                                    <option value="{{ $role->name }}">{{ ucfirst($role->name) }}</option>
+                                    <option value="{{ $role->name }}">{{ strtolower($role->name) }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -122,7 +122,29 @@
             const formTitle = document.getElementById('userModalLabel');
             const btnSubmit = document.getElementById('btnSubmit');
             const passwordInput = document.getElementById('password');
-            const passwordHelp = document.getElementById('passwordHelp'); // <small> di form
+            const passwordHelp = document.getElementById('passwordHelp');
+
+            // ✅ Validasi panjang password sebelum submit
+            form.addEventListener('submit', function (e) {
+                const method = formMethod.value;
+                const password = passwordInput.value.trim();
+
+                // Saat tambah (POST), password wajib minimal 6 karakter
+                if (method === "POST" && password.length < 6) {
+                    e.preventDefault();
+                    alert("Password minimal 6 karakter!");
+                    passwordInput.focus();
+                    return;
+                }
+
+                // Saat edit (PUT), jika password diisi tapi kurang dari 6
+                if (method === "PUT" && password !== "" && password.length < 6) {
+                    e.preventDefault();
+                    alert("Password minimal 6 karakter!");
+                    passwordInput.focus();
+                    return;
+                }
+            });
 
             // Tombol Tambah
             document.getElementById('btnTambah').addEventListener('click', function () {
@@ -132,12 +154,8 @@
                 formTitle.textContent = "Tambah User";
                 btnSubmit.textContent = "Simpan";
 
-                // Password wajib saat tambah
                 passwordInput.required = true;
-
-                // Sembunyikan teks bantuan password saat tambah
                 if (passwordHelp) passwordHelp.style.display = 'none';
-
                 modal.show();
             });
 
@@ -150,20 +168,17 @@
                     document.getElementById('role').value = this.dataset.role;
                     passwordInput.value = '';
 
-                    form.action = "/users/" + id; // route resource users
+                    form.action = "/users/" + id;
                     formMethod.value = "PUT";
                     formTitle.textContent = "Edit User";
                     btnSubmit.textContent = "Perbarui";
 
-                    // Password optional saat edit
                     passwordInput.required = false;
-
-                    // Tampilkan teks bantuan password saat edit
                     if (passwordHelp) passwordHelp.style.display = 'block';
-
                     modal.show();
                 });
             });
         });
     </script>
+
 @endsection

@@ -11,7 +11,8 @@ use App\Models\Role;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory;
+    use Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -56,6 +57,11 @@ class User extends Authenticatable
     public function buku()
     {
         return $this->hasMany(Buku::class);
+    }
+
+    public function peminjaman()
+    {
+        return $this->hasMany(Peminjaman::class);
     }
 
     public function bukuDipinjam()

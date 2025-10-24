@@ -22,7 +22,7 @@ class CheckRole
         }
 
         // Cocokkan nama role
-        if ($user->role->name !== $role) {
+        if ($user->role->name !== $role && !in_array($role, ['admin', 'staff'])) {
             abort(403, 'Akses ditolak! Role Anda: ' . $user->role->name);  // Jika role tidak sesuai
         }
 

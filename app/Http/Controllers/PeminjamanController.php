@@ -14,7 +14,11 @@ class PeminjamanController extends Controller
     {
         $peminjaman = Peminjaman::with(['buku', 'user'])->get();
         $buku = Buku::all();
-        $users = User::all();
+
+        // Hanya ambil user dengan role 'user' (bukan admin/petugas)
+        $users = User::whereHas('role', function ($query) {
+            $query->where('name', 'user');
+        })->get();
 
         return view('admin.peminjaman.index', compact('peminjaman', 'buku', 'users'));
     }

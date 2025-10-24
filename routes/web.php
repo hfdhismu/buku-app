@@ -23,34 +23,30 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | ADMIN ROUTES
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
     Route::middleware(['CheckRole:admin'])->group(function () {
         Route::get('/dashboard', function () {
             $totalUser = User::count();
             $totalBuku = Buku::count();
             $totalProfil = Profil::count();
-            $totalPeminjaman = Peminjaman::count();
+            $totalPeminjaman = Peminjaman::whereNull('tanggal_kembali')->count();
             return view('admin.dashboard', compact('totalUser', 'totalBuku', 'totalProfil', 'totalPeminjaman'));
         })->name('dashboard');
 
-        // ✅ Admin CRUD
+        // ✅ Admin & Staff CRUD
         Route::resource('buku', BukuController::class);
         Route::resource('profil', ProfilController::class);
         Route::resource('peminjaman', PeminjamanController::class);
         Route::resource('users', AdminUserController::class)->except(['create', 'edit', 'show']);
-        // - store -> POST /users
-        // - update -> PUT /users/{user}
-        // - destroy -> DELETE /users/{user}
-        // - index -> GET /users
     });
 
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | USER ROUTES
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
     Route::middleware(['CheckRole:user'])->group(function () {
         Route::get('/dashboard/user', [DashboardController::class, 'index'])

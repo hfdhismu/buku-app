@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Buku;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BukuController extends Controller
 {
@@ -26,9 +27,8 @@ class BukuController extends Controller
             'penerbit' => 'required',
         ]);
 
-        // Kalau mau otomatis dikaitkan ke user tertentu (misalnya admin login)
-        // Kamu bisa ganti dengan auth()->id()
-        $request['user_id'] = $request->user_id ?? 1;
+        // Use the authenticated user ID
+        $request['user_id'] = Auth::id();
 
         Buku::create($request->all());
 
@@ -56,5 +56,5 @@ class BukuController extends Controller
         $buku->delete();
         return redirect()->route('buku.index')->with('success', 'Buku berhasil dihapus!');
     }
-    
+
 }

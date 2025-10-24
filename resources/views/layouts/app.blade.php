@@ -28,7 +28,7 @@
             <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
                 <ul class="navbar-nav mx-auto text-center">
                     @auth
-                        @if(auth()->user()->role->name === 'admin')
+                        @if(auth()->user()->role->name === 'admin' || auth()->user()->role->name === 'staff')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('users.*') ? 'active fw-semibold' : '' }}"
                                     href="{{ route('users.index') }}">
