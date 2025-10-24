@@ -30,6 +30,12 @@
                     @auth
                         @if(auth()->user()->role->name === 'admin' || auth()->user()->role->name === 'staff')
                             <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('dashboard') ? 'active fw-semibold' : '' }}"
+                                    href="{{ route('dashboard') }}">
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('users.*') ? 'active fw-semibold' : '' }}"
                                     href="{{ route('users.index') }}">
                                     User
@@ -46,7 +52,7 @@
                                     href="{{ route('buku.index') }}">
                                     Buku
                                 </a>
-                            </li>                            
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('peminjaman.*') ? 'active fw-semibold' : '' }}"
                                     href="{{ route('peminjaman.index') }}">
