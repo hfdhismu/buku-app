@@ -10,9 +10,24 @@ use Illuminate\Support\Facades\Auth;
 class BukuController extends Controller
 {
     // Menampilkan semua data buku
-    public function index()
+    public function index(Request $request)
     {
-        $buku = Buku::with('user')->get();
+        $search = $request->get('search');
+
+        $buku = Buku::when($search, function ($query, $search) {
+                $query->where('judul', 'like', "%{$search}%")
+                      ->orWhere('penulis', 'like', "%{$search}%")
+                      ->orWhere('tahun_terbit', 'like', "%{$search}%")
+                      ->orWhere('penerbit', 'like', "%{$search}%");
+            })
+            ->get();
+
+        // Jika request-nya AJAX, hanya kirim tabel (untuk live search)
+        if ($request->ajax()) {
+            return view('admin.buku.table', compact('buku'))->render();
+        }
+
+        // Tampilan normal
         $users = User::all();
         return view('admin.buku.index', compact('buku', 'users'));
     }

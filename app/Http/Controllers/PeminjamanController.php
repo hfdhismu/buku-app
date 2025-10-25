@@ -10,9 +10,24 @@ use Illuminate\Http\Request;
 class PeminjamanController extends Controller
 {
     // 📄 Tampilkan semua data peminjaman (untuk admin)
-    public function index()
+    public function index(Request $request)
     {
-        $peminjaman = Peminjaman::with(['buku', 'user'])->get();
+        $search = $request->get('search');
+
+        // Query utama + relasi
+        $peminjaman = Peminjaman::with(['buku', 'user'])
+            ->when($search, function ($query, $search) {
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('buku', function ($q) use ($search) {
+                    $q->where('judul', 'like', "%{$search}%");
+                })
+                ->orWhere('tanggal_pinjam', 'like', "%{$search}%")
+                ->orWhere('tanggal_kembali', 'like', "%{$search}%");
+            })
+            ->get();
+
         $buku = Buku::all();
 
         // Hanya ambil user dengan role 'user' (bukan admin/petugas)
@@ -20,6 +35,12 @@ class PeminjamanController extends Controller
             $query->where('name', 'user');
         })->get();
 
+        // Jika request-nya AJAX (live search)
+        if ($request->ajax()) {
+            return view('admin.peminjaman.table', compact('peminjaman'))->render();
+        }
+
+        // Tampilan normal
         return view('admin.peminjaman.index', compact('peminjaman', 'buku', 'users'));
     }
 

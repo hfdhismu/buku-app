@@ -12,9 +12,28 @@ class AdminUserController extends Controller
     /**
      * Tampilkan daftar user
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua user beserta relasi role
+        $search = $request->get('search');
+
+        // Jika ada pencarian
+        if ($request->ajax()) {
+            $users = User::with('role')
+                ->when($search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhereHas('role', function ($q) use ($search) {
+                              $q->where('name', 'like', "%{$search}%");
+                          });
+                })
+                ->get();
+
+            // kembalikan view partial table saja
+            return response()->json([
+                'html' => view('admin.users.table', compact('users'))->render()
+            ]);
+        }
+
+        // Load awal (tanpa AJAX)
         $users = User::with('role')->get();
         return view('admin.users.index', compact('users'));
     }

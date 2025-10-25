@@ -6,61 +6,28 @@
 <div class="bg-white p-4 rounded shadow-sm">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="m-0">📚 Daftar Buku</h4>
-        <!-- Tombol buka modal -->
-        <button class="btn btn-primary" id="btnTambah">
-            + Tambah Buku
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            
+            <!-- Tombol buka modal -->
+            <button class="btn btn-primary" id="btnTambah">
+                + Tambah Buku
+            </button>            
+        </div>
     </div>
 
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark text-center">
-            <tr>
-                <th>No</th>
-                <th>Judul</th>
-                <th>Penulis</th>
-                <th>Tahun Terbit</th>
-                <th>Penerbit</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($buku as $key => $item)
-                <tr class="text-center">
-                    <td>{{ $key + 1 }}</td>
-                    <td>{{ $item->judul }}</td>
-                    <td>{{ $item->penulis }}</td>
-                    <td>{{ $item->tahun_terbit }}</td>
-                    <td>{{ $item->penerbit }}</td>
-                    <td>
-                        <button 
-                            class="btn btn-sm btn-outline-primary me-1 btnEdit"
-                            data-id="{{ $item->id }}"
-                            data-judul="{{ $item->judul }}"
-                            data-penulis="{{ $item->penulis }}"
-                            data-tahun="{{ $item->tahun_terbit }}"
-                            data-penerbit="{{ $item->penerbit }}">
-                            Edit
-                        </button>
+    {{-- 🔹 Input Search --}}
+    <div class="mb-3">
+        <input type="text" class="form-control" id="searchInput" placeholder="Cari Buku berdasarkan Judul, Penulis, Tahun Terbit, atau Penerbit...">
+    </div>
 
-                        <form action="{{ route('buku.destroy', $item->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Yakin hapus buku ini?')">
-                                Hapus
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr><td colspan="6" class="text-center text-muted">Belum ada data buku</td></tr>
-            @endforelse
-        </tbody>
-    </table>
+    <!-- Container tabel yang bisa berubah -->
+    <div id="tableContainer">
+        @include('admin.buku.table', ['buku' => $buku])
+    </div>
 </div>
 
 <!-- Modal Tambah/Edit Buku -->
@@ -106,7 +73,7 @@
   </div>
 </div>
 
-<!-- Script Modal Dinamis -->
+<!-- Script Modal + Live Search -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const modalEl = document.getElementById('bukuModal');
@@ -115,8 +82,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const formMethod = document.getElementById('formMethod');
     const formTitle = document.getElementById('bukuModalLabel');
     const btnSubmit = document.getElementById('btnSubmit');
+    const searchInput = document.getElementById('searchInput');
+    const tableContainer = document.getElementById('tableContainer');
 
-    // Tombol Tambah
+    // 🔹 Tombol Tambah
     document.getElementById('btnTambah').addEventListener('click', function() {
         form.reset();
         form.action = "{{ route('buku.store') }}";
@@ -126,22 +95,41 @@ document.addEventListener("DOMContentLoaded", function() {
         modal.show();
     });
 
-    // Tombol Edit
-    document.querySelectorAll('.btnEdit').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.dataset.id;
-            document.getElementById('judul').value = this.dataset.judul;
-            document.getElementById('penulis').value = this.dataset.penulis;
-            document.getElementById('tahun_terbit').value = this.dataset.tahun;
-            document.getElementById('penerbit').value = this.dataset.penerbit;
+    // 🔹 Live Search
+    searchInput.addEventListener('keyup', function() {
+        const keyword = this.value;
 
-            form.action = "/buku/" + id;
-            formMethod.value = "PUT";
-            formTitle.textContent = "Edit Buku";
-            btnSubmit.textContent = "Perbarui";
-            modal.show();
+        fetch(`{{ route('buku.index') }}?search=${keyword}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            tableContainer.innerHTML = html;
+            attachEditButtons(); // re-attach event setelah tabel diperbarui
         });
     });
+
+    // 🔹 Fungsi untuk re-bind tombol edit setelah tabel reload
+    function attachEditButtons() {
+        document.querySelectorAll('.btnEdit').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                document.getElementById('judul').value = this.dataset.judul;
+                document.getElementById('penulis').value = this.dataset.penulis;
+                document.getElementById('tahun_terbit').value = this.dataset.tahun;
+                document.getElementById('penerbit').value = this.dataset.penerbit;
+
+                form.action = "/buku/" + id;
+                formMethod.value = "PUT";
+                formTitle.textContent = "Edit Buku";
+                btnSubmit.textContent = "Perbarui";
+                modal.show();
+            });
+        });
+    }
+
+    // Panggil pertama kali (saat load awal)
+    attachEditButtons();
 });
 </script>
 @endsection

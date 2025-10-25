@@ -4,6 +4,7 @@
 
 @section('content')
 <div class="bg-white p-4 rounded shadow-sm">
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="m-0">👤 Daftar Profil</h4>
         <button class="btn btn-primary" id="btnTambah">+ Tambah Profil</button>
@@ -13,49 +14,15 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark text-center">
-            <tr>
-                <th>No</th>
-                <th>Nama User</th>
-                <th>Email</th>
-                <th>Alamat</th>
-                <th>Telepon</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($profil as $key => $item)
-                <tr class="text-center">
-                    <td>{{ $key + 1 }}</td>
-                    <td>{{ $item->user->name ?? '-' }}</td>
-                    <td>{{ $item->user->email ?? '-' }}</td>
-                    <td>{{ $item->alamat }}</td>
-                    <td>{{ $item->telepon }}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1 btnEdit"
-                            data-id="{{ $item->id }}"
-                            data-alamat="{{ $item->alamat }}"
-                            data-telepon="{{ $item->telepon }}"
-                            data-username="{{ $item->user->name }}">
-                            Edit
-                        </button>
+    {{-- 🔹 Input Search --}}
+    <div class="mb-3">
+        <input type="text" class="form-control" id="searchInput" placeholder="Cari Profil berdasarkan Nama, Email, Alamat, atau Telepon...">
+    </div>
 
-                        <form action="{{ route('profil.destroy', $item->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Yakin hapus profil ini?')">Hapus</button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="text-center text-muted">Belum ada profil</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+    {{-- 🔹 Table Wrapper --}}
+    <div id="tableWrapper">
+        @include('admin.profil.table', ['profil' => $profil])
+    </div>
 </div>
 
 <!-- Modal Tambah/Edit Profil -->
@@ -136,6 +103,36 @@ document.addEventListener("DOMContentLoaded", function() {
             userSelect.required = false;
 
             modal.show();
+        });
+    });
+
+    // 🔹 LIVE SEARCH
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('keyup', function() {
+        const query = this.value;
+
+        fetch(`{{ route('profil.index') }}?search=${encodeURIComponent(query)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('tableWrapper').innerHTML = html;
+
+            // Re-attach event listeners untuk tombol edit setelah re-render
+            document.querySelectorAll('.btnEdit').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    document.getElementById('alamat').value = this.dataset.alamat;
+                    document.getElementById('telepon').value = this.dataset.telepon;
+
+                    form.action = "{{ url('profil') }}/" + id;
+                    formMethod.value = "PUT";
+                    formTitle.textContent = "Edit Profil (" + this.dataset.username + ")";
+                    userSelectContainer.style.display = "none";
+                    userSelect.required = false;
+                    modal.show();
+                });
+            });
         });
     });
 });

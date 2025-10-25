@@ -13,6 +13,11 @@
             @endif
         </div>
 
+        {{-- 🔍 Live Search --}}
+        <div class="mb-3">
+            <input type="text" id="search" class="form-control" placeholder="Cari User berdasarkan Nama atau Role...">
+        </div>
+
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -21,86 +26,9 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <table class="table table-bordered table-striped align-middle">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th>No</th>
-                    <th>Nama</th>
-                    <th>Role</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($users as $key => $user)
-                    <tr class="text-center">
-                        <td>{{ $key + 1 }}</td>
-                        <td>{{ $user->name }}</td>
-                        <td>{{ $user->role ? strtolower($user->role->name) : '-' }}</td>
-                        <td>
-                            @php
-                                $loginRole = auth()->user()->role->name;
-                                $targetRole = $user->role ? $user->role->name : null;
-                            @endphp
-
-                            {{-- 🔹 ADMIN --}}
-                            @if ($loginRole === 'admin')
-                                @if ($targetRole !== 'admin')
-                                    <button class="btn btn-sm btn-outline-primary me-1 btnEdit"
-                                        data-id="{{ $user->id }}"
-                                        data-name="{{ $user->name }}"
-                                        data-email="{{ $user->email }}"
-                                        data-role="{{ $targetRole }}">
-                                        Edit
-                                    </button>
-
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Yakin hapus user ini?')">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                @else
-                                    <span class="text-muted fst-italic">Tidak dapat diubah</span>
-                                @endif
-
-                            {{-- 🔹 STAFF --}}
-                            @elseif ($loginRole === 'staff')
-                                @if ($targetRole === 'user')
-                                    <button class="btn btn-sm btn-outline-primary me-1 btnEdit"
-                                        data-id="{{ $user->id }}"
-                                        data-name="{{ $user->name }}"
-                                        data-email="{{ $user->email }}"
-                                        data-role="{{ $targetRole }}">
-                                        Edit
-                                    </button>
-
-                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Yakin hapus user ini?')">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                @else
-                                    <span class="text-muted fst-italic">Tidak dapat diubah</span>
-                                @endif
-
-                            {{-- 🔹 ROLE LAIN (seharusnya tidak ada akses ke sini) --}}
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">Belum ada data user</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div id="userTable">
+            @include('admin.users.table', ['users' => $users])
+        </div>
     </div>
 
     {{-- Modal Tambah/Edit User --}}
@@ -158,7 +86,7 @@
         </div>
     </div>
 
-    {{-- Script Modal --}}
+    {{-- Script Modal + Live Search --}}
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const modalEl = document.getElementById('userModal');
@@ -169,6 +97,20 @@
             const btnSubmit = document.getElementById('btnSubmit');
             const passwordInput = document.getElementById('password');
             const passwordHelp = document.getElementById('passwordHelp');
+
+            // ✅ LIVE SEARCH
+            const searchInput = document.getElementById('search');
+            searchInput.addEventListener('keyup', function () {
+                const query = this.value;
+
+                fetch(`{{ route('users.index') }}?search=${query}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        document.getElementById('userTable').innerHTML = data.html;
+                    });
+            });
 
             // Validasi password
             form.addEventListener('submit', function (e) {
@@ -205,12 +147,13 @@
             }
 
             // Tombol Edit
-            document.querySelectorAll('.btnEdit').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const id = this.dataset.id;
-                    document.getElementById('name').value = this.dataset.name;
-                    document.getElementById('email').value = this.dataset.email;
-                    document.getElementById('role').value = this.dataset.role;
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('btnEdit')) {
+                    const btn = e.target;
+                    const id = btn.dataset.id;
+                    document.getElementById('name').value = btn.dataset.name;
+                    document.getElementById('email').value = btn.dataset.email;
+                    document.getElementById('role').value = btn.dataset.role;
                     passwordInput.value = '';
 
                     form.action = "/users/" + id;
@@ -221,7 +164,7 @@
                     passwordInput.required = false;
                     passwordHelp.style.display = 'block';
                     modal.show();
-                });
+                }
             });
         });
     </script>

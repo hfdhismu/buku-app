@@ -9,9 +9,27 @@ use Illuminate\Http\Request;
 class ProfilController extends Controller
 {
     // Menampilkan semua data profil
-    public function index()
+    public function index(Request $request)
     {
-        $profil = Profil::with('user')->get();
+        $search = $request->get('search');
+
+        $profil = Profil::with('user')
+            ->when($search, function ($query, $search) {
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhere('alamat', 'like', "%{$search}%")
+                ->orWhere('telepon', 'like', "%{$search}%");
+            })
+            ->get();
+
+        // Jika request-nya AJAX, hanya kirim tabel (untuk live search)
+        if ($request->ajax()) {
+            return view('admin.profil.table', compact('profil'))->render();
+        }
+
+        // Tampilan normal
         $users = User::all();
         return view('admin.profil.index', compact('profil', 'users'));
     }
