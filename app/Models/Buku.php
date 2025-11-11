@@ -16,7 +16,6 @@ class Buku extends Model
         'penulis',
         'tahun_terbit',
         'penerbit',
-        'user_id',
     ];
 
     // Relasi: setiap buku dimiliki oleh satu user
